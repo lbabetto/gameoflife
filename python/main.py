@@ -10,7 +10,7 @@ BLACK = (0, 0, 0)
 GREY = (100, 100, 100)
 
 # Initializing grid with random 1s and 0s
-GRID = np.random.choice([0, 1], size=(WIDTH, HEIGHT), p=[0.7, 0.3])
+GRID = np.random.choice([0, 1], size=(WIDTH, HEIGHT), p=[0.5, 0.5])
 
 
 def draw_grid():
@@ -28,7 +28,6 @@ def count_neighbours(x, y):
                 continue
             neighbours += GRID[(x + dx) % WIDTH][(y + dy) % HEIGHT]
 
-    print(f"x: {x}, y: {y}, state: {GRID[x][y]}, neighbours: {int(neighbours)}")
     return int(neighbours)
 
 
@@ -78,7 +77,7 @@ def main():
         draw_grid()
 
         pygame.display.update()
-        CLOCK.tick(5)
+        CLOCK.tick(10)
         time += 1
 
 
