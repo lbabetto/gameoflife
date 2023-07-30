@@ -10,7 +10,8 @@ BLACK = (0, 0, 0)
 GREY = (100, 100, 100)
 
 # Initializing grid with random 1s and 0s
-GRID = np.random.choice([0, 1], size=(WIDTH, HEIGHT), p=[0.5, 0.5])
+fraction_alive = 0.1
+GRID = np.random.choice([1, 0], size=(WIDTH, HEIGHT), p=[fraction_alive, 1 - fraction_alive])
 
 
 def draw_grid():
@@ -32,6 +33,8 @@ def count_neighbours(x, y):
 
 
 pygame.init()
+pygame.font.init()
+FONT = pygame.font.SysFont("consolas.ttf", 24)
 SCREEN = pygame.display.set_mode((WIDTH * PIXEL_SIZE, HEIGHT * PIXEL_SIZE))
 CLOCK = pygame.time.Clock()
 pygame.display.set_caption("Game of Life")
@@ -76,8 +79,10 @@ def main():
 
         draw_grid()
 
+        TEXT = FONT.render(f"Time: {time}", True, (0, 255, 0))
+        SCREEN.blit(TEXT, (0, 0))
         pygame.display.update()
-        CLOCK.tick(10)
+        CLOCK.tick(100)
         time += 1
 
 
