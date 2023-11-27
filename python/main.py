@@ -1,8 +1,11 @@
 import pygame
 import numpy as np
+from itertools import product
 
-WIDTH, HEIGHT = 100, 100
-PIXEL_SIZE = 10
+from typing import Tuple
+
+WIDTH, HEIGHT = 300, 200
+PIXEL_SIZE = 5
 
 # defining colours
 WHITE = (255, 255, 255)
@@ -14,22 +17,78 @@ fraction_alive = 0.1
 GRID = np.random.choice([1, 0], size=(WIDTH, HEIGHT), p=[fraction_alive, 1 - fraction_alive])
 
 
-def draw_grid():
-    for x in range(0, WIDTH):
-        for y in range(0, HEIGHT):
-            rect = pygame.Rect(x * PIXEL_SIZE, y * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE)
-            pygame.draw.rect(SCREEN, GREY, rect, 1)
+def draw_pixel(coords: Tuple[int, int], color: Tuple[int, int, int], hollow: bool = False):
+    """Draw a pixel at position (x,y) of a given color, optionally hollow/filled
+
+    Parameters
+    ----------
+    coords : Tuple[int, int]
+        (x,y) coords on grid
+    color : Tuple[int, int, int]
+        RGB code of the wanted color
+    hollow : bool, optional
+        toggles hollow (False) or filled (True) pixel, by default False
+    """
+    x, y = coords
+
+    rect = pygame.Rect(x * PIXEL_SIZE, y * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE)
+    pygame.draw.rect(SCREEN, color, rect, 1 if hollow else 0)
 
 
-def count_neighbours(x, y):
+def draw_grid() -> None:
+    """Draw a grey grid"""
+    for x, y in product(range(WIDTH), range(HEIGHT)):
+        draw_pixel((x, y), GREY, True)
+
+
+def count_neighbours(coords: Tuple[int, int]) -> int:
+    """Count the number of neighbouring alive cells
+
+    Parameters
+    ----------
+    coords : Tuple[int, int]
+        (x,y) coords on grid
+
+    Return
+    ------
+    int
+        number of neighbouring live cells
+    """
+    x, y = coords
     neighbours = 0
-    for dx in [-1, 0, 1]:
-        for dy in [-1, 0, 1]:
-            if dx == 0 and dy == 0:
-                continue
-            neighbours += GRID[(x + dx) % WIDTH][(y + dy) % HEIGHT]
+
+    for dx, dy in product([-1, 0, 1], [-1, 0, 1]):
+        if dx == 0 and dy == 0:
+            continue
+        neighbours += GRID[(x + dx) % WIDTH][(y + dy) % HEIGHT]
 
     return int(neighbours)
+
+
+def next_step(coords: Tuple[int, int]):
+    """Calculate alive/dead cells for the next step
+
+    Parameters
+    ----------
+    coords : Tuple[int, int]
+        (x,y) coords on grid
+
+
+    Return
+    NDArray[float64]
+        grid at the next step
+    ------
+    """
+    x, y = coords
+
+    neighbours = count_neighbours(coords)
+
+    if GRID[x][y] == 1:
+        if neighbours in [2, 3]:
+            NEWGRID[x][y] = 1
+    else:
+        if neighbours == 3:
+            NEWGRID[x][y] = 1
 
 
 pygame.init()
@@ -48,28 +107,16 @@ def main():
     time = 0
 
     while True:
+        # drawing cells
+        for x, y in product(range(WIDTH), range(HEIGHT)):
+            rect = pygame.Rect(x * PIXEL_SIZE, y * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE)
+            pygame.draw.rect(SCREEN, WHITE if GRID[x][y] == 1 else BLACK, rect)
+
+        # setting up next step
+        global NEWGRID
         NEWGRID = np.zeros((WIDTH, HEIGHT))
-
-        for x in range(WIDTH):
-            for y in range(HEIGHT):
-                # drawing cells
-                rect = pygame.Rect(x * PIXEL_SIZE, y * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE)
-                pygame.draw.rect(SCREEN, WHITE if GRID[x][y] == 1 else BLACK, rect)
-
-                neighbours = count_neighbours(x, y)
-
-                # setting up grid for next timestep
-                if GRID[x][y] == 1:
-                    if neighbours in [2, 3]:
-                        NEWGRID[x][y] = 1
-                    else:
-                        NEWGRID[x][y] = 0
-                else:
-                    if neighbours == 3:
-                        NEWGRID[x][y] = 1
-                    else:
-                        NEWGRID[x][y] = 0
-
+        for x, y in product(range(WIDTH), range(HEIGHT)):
+            next_step((x, y))
         GRID = NEWGRID
 
         for event in pygame.event.get():
@@ -77,6 +124,7 @@ def main():
                 pygame.quit()
                 exit()
 
+        # drawing background grid
         draw_grid()
 
         TEXT = FONT.render(f"Time: {time}", True, (0, 255, 0))
