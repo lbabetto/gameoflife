@@ -1,23 +1,25 @@
 import pygame
 import numpy as np
 from typing import Tuple
+from mpi4py import MPI
 
-################
-# Pygame setup #
-################
-WIDTH, HEIGHT = 200, 100
+#################
+# Display setup #
+#################
+WIDTH, HEIGHT = 200, 150
 PIXEL_SIZE = 5
 
 # defining colours
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GREY = (100, 100, 100)
+GREEN = (0, 255, 0)
+RED = (255, 0, 0)
+BLUE = (0, 0, 255)
 
 #############
 # MPI setup #
 #############
-from mpi4py import MPI
-
 comm = MPI.COMM_WORLD
 nprocs = comm.Get_size()
 rank = comm.Get_rank()
@@ -51,7 +53,11 @@ if rank == 0:
 
 
 def draw_pixel(position: int, color: Tuple[int, int, int], hollow: bool = False) -> None:
-    """Draw a cell at position `position % WIDTH, position // WIDTH` of a given color, optionally hollow/filled
+    """Draw a cell at a certain position, of a given color, optionally hollow/filled
+
+    x, y coordinates are calculate as:
+    x = position % WIDTH
+    y = position // WIDTH
 
     Parameters
     ----------
@@ -77,39 +83,42 @@ def main():
             dtype=np.ushort,
         )
     else:
-        GRID = np.zeros((WIDTH * HEIGHT), dtype=np.ushort)
+        GRID = np.empty((WIDTH * HEIGHT), dtype=np.ushort)
     comm.Bcast(GRID, root=0)
 
     while True:
+        # render cells
         if rank == 0:
             for i in range(WIDTH * HEIGHT):
                 draw_pixel(start + i, WHITE if GRID[i] == 1 else BLACK, hollow=False)
 
+        # Initialize grid for next step (split by process rank)
         NEWGRID = np.zeros(nitems, dtype=np.ushort)
 
-        # calculate neighbours and store data in vector
+        # calculate neighbours for each cell in process rank and store data in new grid
         for i in range(nitems):
             neighbours = 0
 
             for step in [
-                -1,
-                # 0, avoid self-interaction
-                +1,
-                WIDTH - 1,
-                WIDTH,
-                WIDTH + 1,
-                -WIDTH - 1,
-                -WIDTH,
-                -WIDTH + 1,
+                -1,  # left
+                # 0, self, avoid counting
+                +1,  # right
+                WIDTH - 1,  # up-left
+                WIDTH,  # up
+                WIDTH + 1,  # up-right
+                -WIDTH - 1,  # down-left
+                -WIDTH,  # down
+                -WIDTH + 1,  # down-right
             ]:
                 neighbours += GRID[
                     (start + i + step + WIDTH * HEIGHT) % (WIDTH * HEIGHT)
                 ]  # WIDTH * HEIGHT needed for periodicity
 
-            NEWGRID[i] = 0
-            if GRID[i] == 1:
+            # NEWGRID[i] = 0
+            if GRID[start + i] == 1:
                 if neighbours in [2, 3]:
                     NEWGRID[i] = 1
+
             else:
                 if neighbours == 3:
                     NEWGRID[i] = 1
@@ -128,10 +137,10 @@ def main():
                     pygame.quit()
                     exit()
 
-            TEXT = FONT.render(f"Time: {time}", True, (0, 255, 0))
+            TEXT = FONT.render(f"Time: {time}", True, GREEN)
             SCREEN.blit(TEXT, (0, 0))
             pygame.display.update()
-            CLOCK.tick(100)
+            CLOCK.tick(30)  # FPS
 
             time += 1
 
