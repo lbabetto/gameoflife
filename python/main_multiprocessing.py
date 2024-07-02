@@ -4,6 +4,7 @@ from common import draw_pixel, pygame_setup, next_step
 from common import ARGS
 from common import WIDTH, HEIGHT
 from common import BLACK, WHITE, GREY, GREEN
+from multiprocessing import Pool
 
 
 # setting up pygame objects
@@ -26,8 +27,14 @@ def main():
 
         for i in range(WIDTH * HEIGHT):
             draw_pixel(SCREEN, i, WHITE if GRID[i] == 1 else BLACK, False)  # draw cell
-            draw_pixel(SCREEN, i, GREY, True)  # draw background
-            NEWGRID[i] = next_step(i, GRID)  # calculate grid for next step
+            draw_pixel(SCREEN, i, GREY, hollow=True)  # draw background
+
+        with Pool() as p:
+            # calculate grid for next step
+            NEWGRID = p.starmap(
+                next_step,
+                [(i, GRID) for i in range(WIDTH * HEIGHT)],
+            )
 
         GRID = NEWGRID
 

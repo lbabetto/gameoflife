@@ -55,7 +55,7 @@ def main():
 
         # calculate neighbours for each cell in process rank
         for i in range(nitems):
-            next_step(i, GRID, NEWGRID)
+            NEWGRID[i] = next_step(i, GRID)
 
         comm.Allgatherv(NEWGRID, GRID)
 

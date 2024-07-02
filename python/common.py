@@ -40,7 +40,7 @@ def pygame_setup() -> Tuple[
     Returns
     -------
     pygame.Surface
-        Surface on which to display the pixels
+        Surface on which to display the cells
     pygame.time.Clock
         Clock for in-game timing
     pygame.font.Font
@@ -90,19 +90,19 @@ def draw_pixel(
 
 
 def count_neighbours(grid: np.ndarray, position: int) -> int:
-    """Count neighbours for pixel in a certain position
+    """Count neighbours for cell in a certain position
 
     Parameters
     ----------
     grid : np.ndarray
         grid used for fetching neighbours
     position : int
-        position of the pixel for which to calculate the number of neighbours
+        position of the cell for which to calculate the number of neighbours
 
     Returns
     -------
     int
-        number of neighbours for the pixel
+        number of neighbours for the cell
     """
 
     neighbours = 0
@@ -125,12 +125,8 @@ def count_neighbours(grid: np.ndarray, position: int) -> int:
     return neighbours
 
 
-def next_step(
-    position: int,
-    grid: np.ndarray,
-    newgrid: np.ndarray,
-) -> None:
-    """Update the grid for the next timestep based on game rules:
+def next_step(position: int, grid: np.ndarray) -> bool:
+    """Update cells for the next timestep based on game rules:
 
     1. Any live cell with fewer than two live neighbours dies, as if by underpopulation.
     2. Any live cell with two or three live neighbours lives on to the next generation.
@@ -140,18 +136,22 @@ def next_step(
     Parameters
     ----------
     position : int
-        position of the pixel to be evaluated
+        position of the cell to be evaluated
     grid : np.ndarray
         grid on which the game is played
-    newgrid : np.ndarray
-        grid for the next timestep
+
+    Returns
+    -------
+    bool
+        whether that cell is dead (0) or alive (1)
     """
     neighbours = count_neighbours(grid, position)
 
     if grid[position] == 1:
         if neighbours in [2, 3]:
-            newgrid[position] = 1
+            return 1
     else:
         if neighbours == 3:
-            newgrid[position] = 1
+            return 1
 
+    return 0
