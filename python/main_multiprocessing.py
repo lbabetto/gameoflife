@@ -23,7 +23,6 @@ def main():
 
     while True:
         # Initialize grid for next step
-        NEWGRID = np.zeros(WIDTH * HEIGHT, dtype=np.ushort)
 
         for i in range(WIDTH * HEIGHT):
             draw_pixel(SCREEN, i, WHITE if GRID[i] == 1 else BLACK, False)  # draw cell
